@@ -36,3 +36,13 @@ build/
 .env.local
 .env.*
 !.env.example
+
+# Local benchmark logs and disposable run data
+/performance/**/*.log
+/performance/**/samples.json
+/performance/results/**/*
+!/performance/results/**/
+!/performance/results/**/summary.jsonl
+!/performance/results/**/summarize.cjs
+!/performance/results/**/metrics.yaml
+!/performance/results/**/*.md
