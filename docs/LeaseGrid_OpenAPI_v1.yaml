@@ -3,7 +3,7 @@
   "info": {
     "title": "LeaseGrid API",
     "version": "1.0",
-    "description": "Reconstructed target contract for P0 and P1. Implementation progress is recorded in IMPLEMENTATION.md."
+    "description": "LeaseGrid v1. Use a login access token in Authorize. Common responses include 400 for invalid input, 401 for missing or invalid credentials, 403 for insufficient permissions, 404 for inaccessible resources, 409 for conflicts, 422 for lease duration limits and 503 for database unavailability. Application errors include code and traceId. Authentication filters may return an empty body."
   },
   "servers": [
     {
@@ -18,6 +18,7 @@
   "paths": {
     "/auth/register": {
       "post": {
+        "summary": "Register an account",
         "parameters": [],
         "responses": {
           "201": {
@@ -56,6 +57,7 @@
     },
     "/auth/login": {
       "post": {
+        "summary": "Exchange credentials for a JWT",
         "parameters": [],
         "responses": {
           "200": {
@@ -94,6 +96,7 @@
     },
     "/auth/me": {
       "get": {
+        "summary": "Read your profile",
         "parameters": [],
         "responses": {
           "200": {
@@ -121,6 +124,7 @@
     },
     "/teams": {
       "get": {
+        "summary": "List visible teams",
         "parameters": [
           {
             "in": "query",
@@ -178,6 +182,7 @@
         }
       },
       "post": {
+        "summary": "Create a team (administrator)",
         "parameters": [],
         "responses": {
           "201": {
@@ -215,6 +220,7 @@
     },
     "/teams/{teamId}": {
       "get": {
+        "summary": "Read a team",
         "parameters": [
           {
             "in": "path",
@@ -252,6 +258,7 @@
     },
     "/teams/{teamId}/members": {
       "get": {
+        "summary": "List team members",
         "parameters": [
           {
             "in": "path",
@@ -318,6 +325,7 @@
         }
       },
       "post": {
+        "summary": "Add a team member",
         "parameters": [
           {
             "in": "path",
@@ -365,6 +373,7 @@
     },
     "/pools": {
       "get": {
+        "summary": "List visible resource pools",
         "parameters": [
           {
             "in": "query",
@@ -422,6 +431,7 @@
         }
       },
       "post": {
+        "summary": "Create a pool (administrator)",
         "parameters": [],
         "responses": {
           "201": {
@@ -459,6 +469,7 @@
     },
     "/pools/{poolId}": {
       "get": {
+        "summary": "Read pool capacity",
         "parameters": [
           {
             "in": "path",
@@ -494,6 +505,7 @@
         }
       },
       "patch": {
+        "summary": "Update a pool (administrator)",
         "parameters": [
           {
             "in": "path",
@@ -541,6 +553,7 @@
     },
     "/teams/{teamId}/quotas/{poolId}": {
       "get": {
+        "summary": "Read team quota",
         "parameters": [
           {
             "in": "path",
@@ -585,6 +598,7 @@
         }
       },
       "put": {
+        "summary": "Set team quota (administrator)",
         "parameters": [
           {
             "in": "path",
@@ -641,6 +655,7 @@
     },
     "/allocations": {
       "post": {
+        "summary": "Acquire units or join the queue",
         "parameters": [
           {
             "in": "header",
@@ -697,6 +712,7 @@
     },
     "/leases": {
       "get": {
+        "summary": "List visible leases",
         "parameters": [
           {
             "in": "query",
@@ -756,6 +772,7 @@
     },
     "/leases/{leaseId}": {
       "get": {
+        "summary": "Read a lease",
         "parameters": [
           {
             "in": "path",
@@ -793,6 +810,7 @@
     },
     "/leases/{leaseId}/renew": {
       "post": {
+        "summary": "Renew a lease",
         "parameters": [
           {
             "in": "path",
@@ -850,6 +868,7 @@
     },
     "/leases/{leaseId}/release": {
       "post": {
+        "summary": "Release a lease",
         "parameters": [
           {
             "in": "path",
@@ -887,6 +906,7 @@
     },
     "/requests/{requestId}": {
       "get": {
+        "summary": "Read a queued request",
         "parameters": [
           {
             "in": "path",
@@ -924,6 +944,7 @@
     },
     "/requests/{requestId}/cancel": {
       "post": {
+        "summary": "Cancel a queued request",
         "parameters": [
           {
             "in": "path",
@@ -961,6 +982,7 @@
     },
     "/leases/{leaseId}/revoke": {
       "post": {
+        "summary": "Revoke a lease (administrator)",
         "parameters": [
           {
             "in": "path",
@@ -1008,6 +1030,7 @@
     },
     "/analytics/overview": {
       "get": {
+        "summary": "Read system overview (administrator)",
         "parameters": [],
         "responses": {
           "200": {
@@ -1035,6 +1058,7 @@
     },
     "/audit-events": {
       "get": {
+        "summary": "List audit events (administrator)",
         "parameters": [
           {
             "in": "query",

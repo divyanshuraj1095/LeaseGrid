@@ -16,3 +16,24 @@ Run `./mvnw test` with Docker available for PostgreSQL 16 Testcontainers. For a 
 
 The target API is in [OpenAPI](docs/LeaseGrid_OpenAPI_v1.yaml). See the [implementation checklist](docs/IMPLEMENTATION.md) for scope and outstanding work.
 
+
+## Architecture and operations
+
+Spring MVC controllers handle authentication, management, allocations and leases. Transactional services use JdbcClient and PostgreSQL row locks. Scheduled workers expire leases and grant queued requests. Flyway owns schema changes. PostgreSQL stores the audit trail alongside the business records.
+
+For a new installation, copy `.env.example` to `.env` and supply independent database and JWT secrets. Preserve the configured credentials when reusing a volume. On PowerShell use `Copy-Item .env.example .env` only during initial setup. Compose binds both services to loopback. Configure HTTPS at the ingress before exposing the API externally.
+
+| Command | Purpose |
+| --- | --- |
+| `docker compose up -d --build --wait` | Build, apply pending migrations and wait for readiness |
+| `docker compose ps` | Check container health |
+| `docker compose logs --tail 100 app` | Inspect startup and application logs |
+| `docker compose down` | Stop containers and retain the named PostgreSQL volume |
+
+Open [Swagger UI](http://localhost:8080/swagger-ui.html). Execute login, copy the access token and paste it into **Authorize**. The UI loads the [packaged API contract](http://localhost:8080/docs/LeaseGrid_OpenAPI_v1.yaml). The registration and login operations are public. The other operations require a bearer token and apply the relevant membership, ownership or administrator checks. See the [Postman walkthrough](docs/postman/README.md) for a complete example.
+
+Validation errors generally return 400. Invalid credentials or missing authentication return 401. Authorization failures return 403 or visibility-scoped 404. Allocation conflicts return 409 with codes such as QUOTA_EXCEEDED. A duration above the pool maximum returns 422. Controller problem responses include a code and traceId. Security filter responses can have an empty body.
+
+Actuator exposes health only. Use `/actuator/health/liveness` for process liveness and `/actuator/health/readiness` for application readiness including database connectivity. Responses omit component details. Restrict access to interactive documentation at ingress as appropriate.
+
+CI runs `sh mvnw -B verify` on Java 21 with a disposable PostgreSQL 16 Testcontainer, then builds the runtime image on success. On Windows use `.\mvnw.cmd -B verify`. The workflow runs for pushes and pull requests and performs no publish or deploy step.

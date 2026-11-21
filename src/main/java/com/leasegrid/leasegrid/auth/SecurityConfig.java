@@ -25,6 +25,8 @@ public class SecurityConfig {
     @Bean SecurityFilterChain security(HttpSecurity http) throws Exception {
         return http.csrf(c->c.disable()).sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a->a.requestMatchers("/api/v1/auth/register","/api/v1/auth/login").permitAll()
+                .requestMatchers("/actuator/health", "/actuator/health/readiness", "/actuator/health/liveness",
+                        "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/swagger-config", "/docs/LeaseGrid_OpenAPI_v1.yaml").permitAll()
                 .anyRequest().authenticated()).oauth2ResourceServer(o->o.jwt(j->{})).build();
     }
 }
