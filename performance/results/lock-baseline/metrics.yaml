@@ -1,0 +1,4 @@
+services:
+  app:
+    environment:
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,metrics

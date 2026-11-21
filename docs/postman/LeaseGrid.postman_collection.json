@@ -1,0 +1,715 @@
+{
+  "info": {
+    "name": "LeaseGrid lifecycle",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwtToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Authentication and access errors",
+      "item": [
+        {
+          "name": "Register a new member",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/register",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"postman-{{runId}}@example.test\",\n  \"password\": \"{{memberPassword}}\",\n  \"displayName\": \"Postman tester\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set(\"runId\", pm.variables.replaceIn(\"{{$guid}}\"));",
+                  "pm.environment.set(\"memberPassword\", pm.variables.replaceIn(\"{{$guid}}\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "    pm.environment.set(\"userId\", pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Duplicate registration",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/register",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"postman-{{runId}}@example.test\",\n  \"password\": \"{{memberPassword}}\",\n  \"displayName\": \"Postman tester\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Missing bearer token",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/me",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log in as member",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"postman-{{runId}}@example.test\",\n  \"password\": \"{{memberPassword}}\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    pm.environment.set(\"jwtToken\", pm.response.json().accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read own identity",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/me",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Registered identity\", () => pm.expect(pm.response.json().id).to.equal(pm.environment.get(\"userId\")));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Member cannot create a team",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/teams",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman {{runId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Administrator setup",
+      "item": [
+        {
+          "name": "Log in as administrator",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    pm.environment.set(\"jwtToken\", pm.response.json().accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create team",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/teams",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman {{runId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "    pm.environment.set(\"teamId\", pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add registered member",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/teams/{{teamId}}/members",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"teamRole\": \"MEMBER\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List team members",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/teams/{{teamId}}/members",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create pool",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/pools",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman CPU pool\",\n  \"code\": \"pm-{{runId}}\",\n  \"resourceType\": \"CPU_SLOT\",\n  \"totalCapacity\": 5,\n  \"maxLeaseSeconds\": 3600\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "    pm.environment.set(\"poolId\", pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Set team quota",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/teams/{{teamId}}/quotas/{{poolId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quotaLimit\": 3\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Member lease lifecycle",
+      "item": [
+        {
+          "name": "Switch back to member",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"postman-{{runId}}@example.test\",\n  \"password\": \"{{memberPassword}}\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    pm.environment.set(\"jwtToken\", pm.response.json().accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List teams",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/teams",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List pools",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/pools",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Acquire 3 resource units",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/allocations",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{runId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"poolId\": \"{{poolId}}\",\n  \"teamId\": \"{{teamId}}\",\n  \"quantity\": 3,\n  \"durationSeconds\": 600,\n  \"queueIfUnavailable\": false\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "    pm.environment.set(\"leaseId\", pm.response.json().id);",
+                  "    pm.environment.set(\"renewUntil\", new Date(Date.parse(pm.response.json().expiresAt) + 600000).toISOString());",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Replay allocation",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/allocations",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{runId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"poolId\": \"{{poolId}}\",\n  \"teamId\": \"{{teamId}}\",\n  \"quantity\": 3,\n  \"durationSeconds\": 600,\n  \"queueIfUnavailable\": false\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "    pm.test(\"Same lease\", () => pm.expect(pm.response.json().id).to.equal(pm.environment.get(\"leaseId\")));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Request one unit beyond team quota",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/allocations",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{runId}}-over-quota"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"poolId\": \"{{poolId}}\",\n  \"teamId\": \"{{teamId}}\",\n  \"quantity\": 1,\n  \"durationSeconds\": 600,\n  \"queueIfUnavailable\": false\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Team quota enforced\", () => pm.expect(pm.response.json().code).to.equal(\"QUOTA_EXCEEDED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify two pool units remain",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/pools/{{poolId}}",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Verify two pool units remain\", () => pm.expect(pm.response.json().availableCapacity).to.equal(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List team leases",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/leases?teamId={{teamId}}",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"List team leases\", () => pm.expect(pm.response.json().items.map(lease => lease.id)).to.include(pm.environment.get('leaseId')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read lease",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/leases/{{leaseId}}",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Renew for ten more minutes",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/leases/{{leaseId}}/renew",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestedExpiresAt\": \"{{renewUntil}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Expiry extended\", () => pm.expect(Date.parse(pm.response.json().expiresAt)).to.equal(Date.parse(pm.environment.get(\"renewUntil\"))));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Release lease",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/leases/{{leaseId}}/release",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Released\", () => pm.expect(pm.response.json().status).to.equal(\"RELEASED\"));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify returned quota",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/teams/{{teamId}}/quotas/{{poolId}}",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Quota restored\", () => pm.expect(pm.response.json().remainingUnits).to.equal(3));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify five pool units restored",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/pools/{{poolId}}",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Verify five pool units restored\", () => pm.expect(pm.response.json().availableCapacity).to.equal(5));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

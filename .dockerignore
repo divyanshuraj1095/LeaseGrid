@@ -1,0 +1,9 @@
+*
+!.mvn
+!.mvn/**
+!mvnw
+!pom.xml
+!src
+!src/**
+!docs
+!docs/LeaseGrid_OpenAPI_v1.yaml

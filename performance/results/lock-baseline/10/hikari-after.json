@@ -1,0 +1,65 @@
+[
+    {
+        "availableTags":  [
+                              {
+                                  "tag":  "pool",
+                                  "values":  [
+                                                 "HikariPool-1"
+                                             ]
+                              }
+                          ],
+        "baseUnit":  "seconds",
+        "description":  "Connection acquire time",
+        "measurements":  [
+                             {
+                                 "statistic":  "COUNT",
+                                 "value":  31.0
+                             },
+                             {
+                                 "statistic":  "TOTAL_TIME",
+                                 "value":  0.045623721
+                             },
+                             {
+                                 "statistic":  "MAX",
+                                 "value":  0.006198383
+                             }
+                         ],
+        "name":  "hikaricp.connections.acquire"
+    },
+    {
+        "availableTags":  [
+                              {
+                                  "tag":  "pool",
+                                  "values":  [
+                                                 "HikariPool-1"
+                                             ]
+                              }
+                          ],
+        "description":  "Max connections",
+        "measurements":  [
+                             {
+                                 "statistic":  "VALUE",
+                                 "value":  10.0
+                             }
+                         ],
+        "name":  "hikaricp.connections.max"
+    },
+    {
+        "availableTags":  [
+                              {
+                                  "tag":  "pool",
+                                  "values":  [
+                                                 "HikariPool-1"
+                                             ]
+                              }
+                          ],
+        "description":  "Connection timeout total count",
+        "measurements":  [
+                             {
+                                 "statistic":  "COUNT",
+                                 "value":  0.0
+                             }
+                         ],
+        "name":  "hikaricp.connections.timeout"
+    }
+]
