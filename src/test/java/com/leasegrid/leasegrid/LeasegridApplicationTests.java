@@ -95,6 +95,15 @@ class LeasegridApplicationTests {
     @Test void registerLoginAndReadIdentityOverHttp() throws Exception {
         var client=java.net.http.HttpClient.newHttpClient();
         var root="http://localhost:"+port+"/api/v1/auth/";
+        String origin = "http://localhost:5173";
+        var preflight = java.net.http.HttpRequest.newBuilder(java.net.URI.create(root+"login"))
+                .header("Origin", origin)
+                .header("Access-Control-Request-Method", "POST")
+                .header("Access-Control-Request-Headers", "content-type")
+                .method("OPTIONS", java.net.http.HttpRequest.BodyPublishers.noBody()).build();
+        var cors = client.send(preflight, java.net.http.HttpResponse.BodyHandlers.discarding());
+        assertEquals(200, cors.statusCode());
+        assertEquals(origin, cors.headers().firstValue("Access-Control-Allow-Origin").orElse(""));
         String email=UUID.randomUUID()+"@example.org";
         var mapper=new tools.jackson.databind.ObjectMapper();
         String registration=mapper.writeValueAsString(Map.of("email",email,"password","fixture-password","displayName","API tester"));
@@ -106,9 +115,10 @@ class LeasegridApplicationTests {
         var token=client.send(login,java.net.http.HttpResponse.BodyHandlers.ofString());
         assertEquals(200,token.statusCode());
         var me=java.net.http.HttpRequest.newBuilder(java.net.URI.create(root+"me"))
-                .header("Authorization","Bearer "+mapper.readTree(token.body()).get("accessToken").asString()).GET().build();
+                .header("Origin",origin).header("Authorization","Bearer "+mapper.readTree(token.body()).get("accessToken").asString()).GET().build();
         var profile=client.send(me,java.net.http.HttpResponse.BodyHandlers.ofString());
         assertEquals(200,profile.statusCode());
+        assertEquals(origin,profile.headers().firstValue("Access-Control-Allow-Origin").orElse(""));
         assertEquals(email,mapper.readTree(profile.body()).get("email").asString());
     }
         @Test void rollbackRemovesLeaseCountersAndKeyClaim() {
