@@ -95,25 +95,29 @@ class LeasegridApplicationTests {
     @Test void registerLoginAndReadIdentityOverHttp() throws Exception {
         var client=java.net.http.HttpClient.newHttpClient();
         var root="http://localhost:"+port+"/api/v1/auth/";
-        String origin = "http://localhost:5173";
+        String origin = "https://lease-grid-seven.vercel.app";
+        for (String candidate : List.of(origin, "http://localhost:5173", "https://untrusted.example")) {
         var preflight = java.net.http.HttpRequest.newBuilder(java.net.URI.create(root+"login"))
-                .header("Origin", origin)
+                .header("Origin", candidate)
                 .header("Access-Control-Request-Method", "POST")
                 .header("Access-Control-Request-Headers", "content-type")
                 .method("OPTIONS", java.net.http.HttpRequest.BodyPublishers.noBody()).build();
         var cors = client.send(preflight, java.net.http.HttpResponse.BodyHandlers.discarding());
-        assertEquals(200, cors.statusCode());
-        assertEquals(origin, cors.headers().firstValue("Access-Control-Allow-Origin").orElse(""));
+        boolean allowed = !candidate.equals("https://untrusted.example");
+        assertEquals(allowed ? 200 : 403, cors.statusCode());
+        assertEquals(allowed ? candidate : "", cors.headers().firstValue("Access-Control-Allow-Origin").orElse(""));
+        }
         String email=UUID.randomUUID()+"@example.org";
         var mapper=new tools.jackson.databind.ObjectMapper();
         String registration=mapper.writeValueAsString(Map.of("email",email,"password","fixture-password","displayName","API tester"));
         var signup=java.net.http.HttpRequest.newBuilder(java.net.URI.create(root+"register")).header("Content-Type","application/json")
-                .POST(java.net.http.HttpRequest.BodyPublishers.ofString(registration)).build();
+                .header("Origin",origin).POST(java.net.http.HttpRequest.BodyPublishers.ofString(registration)).build();
         assertEquals(201,client.send(signup,java.net.http.HttpResponse.BodyHandlers.ofString()).statusCode());
         var login=java.net.http.HttpRequest.newBuilder(java.net.URI.create(root+"login")).header("Content-Type","application/json")
-                .POST(java.net.http.HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(Map.of("email",email,"password","fixture-password")))).build();
+                .header("Origin",origin).POST(java.net.http.HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(Map.of("email",email,"password","fixture-password")))).build();
         var token=client.send(login,java.net.http.HttpResponse.BodyHandlers.ofString());
         assertEquals(200,token.statusCode());
+        assertEquals(origin,token.headers().firstValue("Access-Control-Allow-Origin").orElse(""));
         var me=java.net.http.HttpRequest.newBuilder(java.net.URI.create(root+"me"))
                 .header("Origin",origin).header("Authorization","Bearer "+mapper.readTree(token.body()).get("accessToken").asString()).GET().build();
         var profile=client.send(me,java.net.http.HttpResponse.BodyHandlers.ofString());

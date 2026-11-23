@@ -25,10 +25,10 @@ public class SecurityConfig {
     @Bean JwtDecoder decoder(SecretKey key) { return NimbusJwtDecoder.withSecretKey(key).build(); }
     @Bean JwtEncoder encoder(SecretKey key) { return new NimbusJwtEncoder(new ImmutableSecret<>(key)); }
     @Bean BCryptPasswordEncoder passwords() { return new BCryptPasswordEncoder(); }
-    @Bean UrlBasedCorsConfigurationSource apiCors(@Value("${LEASEGRID_CORS_ORIGINS:http://localhost:5173}") List<String> origins) {
+    @Bean UrlBasedCorsConfigurationSource apiCors(@Value("${LEASEGRID_CORS_ORIGINS:http://localhost:5173,https://lease-grid-seven.vercel.app}") List<String> origins) {
         var policy = new CorsConfiguration();
         policy.setAllowedOrigins(origins);
-        policy.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "OPTIONS"));
+        policy.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         policy.setAllowedHeaders(List.of("Content-Type", "Authorization", "Idempotency-Key"));
         var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/v1/**", policy);
