@@ -1,6 +1,10 @@
 # LeaseGrid
 LeaseGrid leases logical units from shared resource pools. PostgreSQL owns the pool and team counters and lease deadlines.
 
+## Deployment
+
+LeaseGrid has been deployed successfully. Use `/actuator/health/readiness` to check that the deployed application is ready and can connect to PostgreSQL.
+
 ## Run locally
 Set POSTGRES_USER and POSTGRES_PASSWORD for both Compose and the application. Set JWT_SECRET to a Base64 encoding of at least 32 cryptographically random bytes. The .env.example file lists configuration keys. Compose automatically reads .env. Export the same variables into the shell when running Maven.
 
